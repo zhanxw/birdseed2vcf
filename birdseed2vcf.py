@@ -133,6 +133,7 @@ def set_columns(mapfile, birdseedfile):
         os._exit(1)
 
     # -- Data file --
+    birdseedfile = os.path.basename(birdseedfile)
     cmd = "grep %s %s"  %  (birdseedfile, mapfile)
     status, output = commands.getstatusoutput(cmd)
     lines = output.split("\n")
@@ -392,10 +393,10 @@ if __name__ == "__main__":
                 raise NameError("Duplicate names in the probe header; please fix this")
             # determine output filenames
             if args.mapfile:
-                if not args.birdseed in mapfile_annotations:
+                if not os.path.basename(args.birdseed) in mapfile_annotations:
                     print "Error: the birdseed filename %s was not found in the mapfile %s" % (args.birdseed, args.mapfile)
                     continue
-                myOutputVcf = myVcfSample = mapfile_annotations[ args.birdseed ]
+                myOutputVcf = myVcfSample = mapfile_annotations[ os.path.basename(args.birdseed) ]
                 myOutputVcf += ".vcf"
             if args.output_vcf:
                 myOutputVcf = args.output_vcf
@@ -445,7 +446,9 @@ if __name__ == "__main__":
         ref_fasta = fasta[chromosome][position-1].upper()
 
         # output to the VCF file
-        if ref_fasta == annot["Allele A"] or ref_fasta == annot["Allele B"] or not args.drop_tri_allelic:
+        if (annot["Strand"] == "+" and (ref_fasta == annot["Allele A"] or ref_fasta == annot["Allele B"])) or \
+           (annot["Strand"] == "-" and (ref_fasta == reverse_base(annot["Allele A"]) or ref_fasta == reverse_base(annot["Allele B"]))) or \
+	   not args.drop_tri_allelic:
             if not args.sort_on_the_fly:
                 vcf_line(output,chromosome,str(position),annot["Allele A"],annot["Allele B"],ref_fasta,sp[sample_index],annot["dbSNP RS ID"],sp[0],annot["Strand"])
             else:
